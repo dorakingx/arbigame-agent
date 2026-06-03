@@ -1,5 +1,6 @@
 import { defineChain } from "viem";
 import { createConfig, http } from "wagmi";
+import { injected } from "wagmi/connectors";
 
 export const arbitrumSepolia = defineChain({
   id: 421614,
@@ -25,7 +26,14 @@ export const arbitrumSepolia = defineChain({
 
 export const wagmiConfig = createConfig({
   chains: [arbitrumSepolia],
+  connectors: [
+    injected({
+      target: "metaMask"
+    }),
+    injected()
+  ],
   transports: {
     [arbitrumSepolia.id]: http()
-  }
+  },
+  ssr: true
 });

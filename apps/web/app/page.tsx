@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Sparkles, Wand2 } from "lucide-react";
+import { AgentTrace } from "@/components/AgentTrace";
 import { ContractCodeViewer } from "@/components/ContractCodeViewer";
 import { GamePreview } from "@/components/GamePreview";
 import { GameSpecPreview } from "@/components/GameSpecPreview";
@@ -23,9 +24,17 @@ const examples = [
 export default function Home() {
   const [prompt, setPrompt] = useState(defaultPrompt);
   const [generatedPrompt, setGeneratedPrompt] = useState(defaultPrompt);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const spec = useMemo(() => generateGame(generatedPrompt), [generatedPrompt]);
   const contractCode = useMemo(() => generateDiceBattleContract(spec), [spec]);
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    setGeneratedPrompt(prompt);
+    setIsGenerating(false);
+  }
 
   return (
     <main className="min-h-screen overflow-hidden">
@@ -60,10 +69,12 @@ export default function Home() {
 
             <PromptForm
               examples={examples}
+              isGenerating={isGenerating}
               prompt={prompt}
               onPromptChange={setPrompt}
-              onGenerate={() => setGeneratedPrompt(prompt)}
+              onGenerate={handleGenerate}
             />
+            <AgentTrace isGenerating={isGenerating} />
           </div>
 
           <GamePreview spec={spec} compact />

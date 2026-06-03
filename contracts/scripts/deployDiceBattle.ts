@@ -6,9 +6,13 @@ async function main() {
   const diceBattle = await DiceBattle.deploy(entryFee);
 
   await diceBattle.waitForDeployment();
+  const address = await diceBattle.getAddress();
 
-  console.log(`DiceBattle deployed to: ${await diceBattle.getAddress()}`);
+  console.log(`DiceBattle deployed to: ${address}`);
   console.log(`Entry fee: ${ethers.formatEther(entryFee)} ETH`);
+  console.log("");
+  console.log("Add this to apps/web/.env.local and Vercel Production env:");
+  console.log(`NEXT_PUBLIC_DICE_BATTLE_ADDRESS=${address}`);
 }
 
 main().catch((error) => {

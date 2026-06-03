@@ -2,7 +2,7 @@
 
 Create Web3 games on Arbitrum with AI.
 
-ArbiGame Agent is a hackathon MVP that turns a natural-language game idea into a safe, template-based onchain game starter for Arbitrum Sepolia. The first version generates a two-player Dice Battle game with Solidity contracts, a frontend preview, tests, and deployment instructions.
+ArbiGame Agent is a hackathon MVP that turns a natural-language game idea into a safe, template-based onchain game starter for Arbitrum Sepolia. The first version generates a two-player Dice Battle game with Solidity contracts, a live wallet-enabled frontend, tests, and deployment instructions.
 
 ## Built for Arbitrum Open House London Buildathon
 
@@ -28,14 +28,16 @@ Arbitrum provides Ethereum-compatible infrastructure with lower-cost execution, 
 - Safe Dice Battle Solidity template.
 - Arbitrum Sepolia wallet and network configuration.
 - Generated contract code viewer.
-- Playable-looking frontend preview.
+- Wallet-enabled Dice Battle UI for Join, Roll, and Claim transactions.
+- Deployed-contract address support through `NEXT_PUBLIC_DICE_BATTLE_ADDRESS`.
+- Agent pipeline trace that shows prompt parsing, safe-template selection, and Arbitrum file preparation.
 - Hardhat tests for core contract behavior.
 - Deployment script for Arbitrum Sepolia.
 - Demo-only and unaudited warnings throughout the app.
 
 ## Buildathon Demo Flow
 
-Prompt -> GameSpec -> Smart Contract -> Frontend Preview -> Tests -> Arbitrum Sepolia Deployment Instructions
+Prompt -> GameSpec -> Smart Contract -> Wallet Game UI -> Arbitrum Sepolia Transaction -> Tests -> Deployment Instructions
 
 Example prompts:
 
@@ -68,6 +70,13 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+For live contract interactions, create `apps/web/.env.local`:
+
+```bash
+NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+NEXT_PUBLIC_DICE_BATTLE_ADDRESS=0xYourDeployedDiceBattle
+```
+
 ## Run Contract Tests
 
 ```bash
@@ -90,6 +99,38 @@ npm run deploy:arbitrum-sepolia
 ```
 
 The deployment script deploys `DiceBattle` with a default entry fee of `0.001 ETH`.
+It prints the `NEXT_PUBLIC_DICE_BATTLE_ADDRESS` value that should be copied into the frontend and Vercel project environment variables.
+
+## Vercel Deployment
+
+This repo includes `vercel.json` for the monorepo layout. The production frontend builds from the root and outputs the Next.js app from `apps/web/.next`.
+
+After deploying the contract, set this environment variable in Vercel:
+
+```bash
+NEXT_PUBLIC_DICE_BATTLE_ADDRESS=0xYourDeployedDiceBattle
+```
+
+Then redeploy:
+
+```bash
+vercel deploy --prod
+```
+
+## Live Demo Notes
+
+The live game UI expects:
+
+- A browser wallet such as MetaMask.
+- Arbitrum Sepolia selected in the wallet.
+- Testnet ETH for the entry fee and gas.
+- A deployed `DiceBattle` contract address configured through `NEXT_PUBLIC_DICE_BATTLE_ADDRESS`.
+
+When configured, the buttons call the actual contract methods:
+
+- `joinGame()` with the onchain `entryFee`.
+- `rollDice()` after two players have joined.
+- `claimPrize()` when the connected wallet is the winner.
 
 ## Security Disclaimer
 

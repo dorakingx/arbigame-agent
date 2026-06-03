@@ -2,12 +2,13 @@ import { Send, Shuffle } from "lucide-react";
 
 interface PromptFormProps {
   examples: string[];
+  isGenerating?: boolean;
   prompt: string;
   onPromptChange: (prompt: string) => void;
   onGenerate: () => void;
 }
 
-export function PromptForm({ examples, prompt, onPromptChange, onGenerate }: PromptFormProps) {
+export function PromptForm({ examples, isGenerating = false, prompt, onPromptChange, onGenerate }: PromptFormProps) {
   return (
     <div className="rounded border border-white/12 bg-white/[0.06] p-4 shadow-2xl backdrop-blur md:p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -41,10 +42,11 @@ export function PromptForm({ examples, prompt, onPromptChange, onGenerate }: Pro
       <button
         type="button"
         onClick={onGenerate}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded bg-electric px-4 py-3 text-sm font-bold text-ink transition hover:bg-white"
+        disabled={isGenerating}
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded bg-electric px-4 py-3 text-sm font-bold text-ink transition hover:bg-white disabled:cursor-wait disabled:bg-white/40"
       >
         <Send size={17} aria-hidden="true" />
-        Generate Dice Battle
+        {isGenerating ? "Agent is generating..." : "Generate Dice Battle"}
       </button>
     </div>
   );
