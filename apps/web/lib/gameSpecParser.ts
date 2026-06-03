@@ -1,10 +1,10 @@
 import type { GameSpec, GameTheme } from "@shared/types/GameSpec";
 
 const titleByTheme: Record<GameTheme, string> = {
-  fantasy: "Dragon Dice Duel",
-  cyberpunk: "Neon Dice Clash",
-  medieval: "Knight's Dice Trial",
-  default: "Arbitrum Dice Battle"
+  fantasy: "Dragon Dice Trial",
+  cyberpunk: "Neon Solo Dice",
+  medieval: "Knight's Solo Trial",
+  default: "Arbitrum Solo Dice"
 };
 
 export function parsePromptToGameSpec(prompt: string): GameSpec {
@@ -16,15 +16,15 @@ export function parsePromptToGameSpec(prompt: string): GameSpec {
     gameType: "dice-battle",
     title: titleByTheme[theme],
     theme,
-    playerCount: 2,
+    playerCount: 1,
     entryFeeEth,
-    prizeRule: "Winner takes the full prize pool after both players roll once.",
+    prizeRule: "The solo player rolls once. A roll of 4 or higher wins and can claim the prize pool.",
     rules: [
-      `Two players join by depositing ${entryFeeEth} ETH each.`,
-      "Each player can roll one six-sided dice once after both players have joined.",
-      "The higher dice roll wins the prize pool.",
-      "If both players roll the same number, the demo contract uses a deterministic tiebreaker.",
-      "The winner claims the pooled ETH from the contract."
+      `One player joins by depositing ${entryFeeEth} ETH.`,
+      "The player rolls one six-sided dice once.",
+      "A roll of 4, 5, or 6 wins the solo challenge.",
+      "A winning player can claim the contract prize pool.",
+      "A roll of 1, 2, or 3 ends the demo round without a claimable prize."
     ],
     targetChain: "Arbitrum Sepolia",
     chainId: 421614,

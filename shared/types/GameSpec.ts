@@ -4,7 +4,7 @@ export interface GameSpec {
   gameType: "dice-battle";
   title: string;
   theme: GameTheme;
-  playerCount: 2;
+  playerCount: 1;
   entryFeeEth: string;
   prizeRule: string;
   rules: string[];

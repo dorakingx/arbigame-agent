@@ -13,12 +13,12 @@ import { generateDiceBattleContract } from "@/lib/diceBattleTemplate";
 import { generateGame } from "@/lib/mockAgent";
 
 const defaultPrompt =
-  "Create a fantasy dice battle game where two players deposit 0.001 ETH and the winner takes the prize pool.";
+  "Create a fantasy solo dice battle game on Arbitrum. One player deposits 0.001 ETH and wins by rolling 4 or higher.";
 
 const examples = [
-  "Create a fantasy dice battle game where two players deposit 0.001 ETH and the winner takes the prize pool.",
-  "Create a cyberpunk dice duel on Arbitrum with a neon UI and simple winner-takes-all rule.",
-  "Create a two-player dice game for Arbitrum Sepolia with a medieval theme."
+  "Create a fantasy solo dice battle game where one player deposits 0.001 ETH and wins on 4 or higher.",
+  "Create a cyberpunk one-player dice challenge on Arbitrum with a neon UI.",
+  "Create a solo medieval dice trial for Arbitrum Sepolia."
 ];
 
 export default function Home() {

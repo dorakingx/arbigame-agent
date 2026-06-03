@@ -32,16 +32,10 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     functionName: "entryFee",
     query: { enabled: contractEnabled }
   });
-  const { data: player1, refetch: refetchPlayer1 } = useReadContract({
+  const { data: player, refetch: refetchPlayer } = useReadContract({
     address: diceBattleAddress,
     abi: diceBattleAbi,
-    functionName: "player1",
-    query: { enabled: contractEnabled }
-  });
-  const { data: player2, refetch: refetchPlayer2 } = useReadContract({
-    address: diceBattleAddress,
-    abi: diceBattleAbi,
-    functionName: "player2",
+    functionName: "player",
     query: { enabled: contractEnabled }
   });
   const { data: winner, refetch: refetchWinner } = useReadContract({
@@ -75,14 +69,12 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   const normalizedAddress = address?.toLowerCase();
-  const normalizedPlayer1 = player1?.toLowerCase();
-  const normalizedPlayer2 = player2?.toLowerCase();
+  const normalizedPlayer = player?.toLowerCase();
   const normalizedWinner = winner?.toLowerCase();
-  const hasPlayer1 = Boolean(player1 && player1 !== zeroAddress);
-  const hasPlayer2 = Boolean(player2 && player2 !== zeroAddress);
-  const isFull = hasPlayer1 && hasPlayer2;
-  const isPlayer = Boolean(normalizedAddress && (normalizedAddress === normalizedPlayer1 || normalizedAddress === normalizedPlayer2));
+  const hasPlayer = Boolean(player && player !== zeroAddress);
+  const isPlayer = Boolean(normalizedAddress && normalizedAddress === normalizedPlayer);
   const isWinner = Boolean(normalizedAddress && normalizedWinner && normalizedWinner !== zeroAddress && normalizedAddress === normalizedWinner);
+  const didLose = Boolean(isPlayer && hasRolled && (!winner || winner === zeroAddress));
   const isWrongChain = isConnected && chainId !== arbitrumSepolia.id;
   const displayEntryFee = entryFee ? formatEther(entryFee) : spec.entryFeeEth;
   const isBusy = isPending || isConfirming;
@@ -116,8 +108,12 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
       return error.message.split("\n")[0];
     }
 
+    if (didLose) {
+      return "Roll settled. You needed 4 or higher, so there is no claimable prize this round.";
+    }
+
     return lastAction;
-  }, [contractEnabled, error, isConfirmed, isConfirming, isConnected, isPending, isWrongChain, lastAction]);
+  }, [contractEnabled, didLose, error, isConfirmed, isConfirming, isConnected, isPending, isWrongChain, lastAction]);
 
   useEffect(() => {
     if (!isConfirmed) {
@@ -126,8 +122,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
 
     void Promise.all([
       refetchEntryFee(),
-      refetchPlayer1(),
-      refetchPlayer2(),
+      refetchPlayer(),
       refetchWinner(),
       refetchPrizeClaimed(),
       refetchHasRolled(),
@@ -138,8 +133,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     refetchEntryFee,
     refetchHasRolled,
     refetchMyRoll,
-    refetchPlayer1,
-    refetchPlayer2,
+    refetchPlayer,
     refetchPrizeClaimed,
     refetchWinner
   ]);
@@ -204,8 +198,8 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   }
 
   const canSendLiveTx = contractEnabled && isConnected && !isWrongChain && !isBusy;
-  const canJoin = canSendLiveTx && !isPlayer && !isFull;
-  const canRoll = canSendLiveTx && isPlayer && isFull && !hasRolled && (!winner || winner === zeroAddress);
+  const canJoin = canSendLiveTx && !hasPlayer;
+  const canRoll = canSendLiveTx && isPlayer && !hasRolled;
   const canClaim = canSendLiveTx && isWinner && !prizeClaimed;
 
   return (
@@ -227,8 +221,8 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat icon={<Coins size={16} />} label="Entry" value={`${displayEntryFee} ETH`} />
-          <Stat icon={<Crown size={16} />} label="Prize" value="Winner takes all" />
-          <Stat icon={<Dice5 size={16} />} label="Players" value="2 only" />
+          <Stat icon={<Crown size={16} />} label="Win Rule" value="Roll 4+" />
+          <Stat icon={<Dice5 size={16} />} label="Players" value="1 only" />
         </div>
 
         <div className="mt-5 rounded border border-white/10 bg-white/[0.04] p-4">
@@ -247,7 +241,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
             onClick={joinGame}
             disabled={!canJoin}
           >
-            {isFull ? "Game Full" : "Join Game"}
+            {hasPlayer ? "Game Started" : "Join Game"}
           </button>
           <button
             className="rounded border border-white/14 bg-white/[0.07] px-4 py-3 text-sm font-bold text-white transition hover:border-electric disabled:cursor-not-allowed disabled:text-white/35"
@@ -278,6 +272,8 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
             <p className="mt-1 truncate font-mono text-white/72">{diceBattleAddress ?? "Deploy pending"}</p>
             {winner && winner !== zeroAddress ? (
               <p className="mt-2 truncate text-xs text-white/45">Winner: {winner}</p>
+            ) : hasRolled ? (
+              <p className="mt-2 text-xs text-white/45">No winner. Roll was below 4.</p>
             ) : null}
           </div>
         </div>

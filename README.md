@@ -2,7 +2,7 @@
 
 Create Web3 games on Arbitrum with AI.
 
-ArbiGame Agent is a hackathon MVP that turns a natural-language game idea into a safe, template-based onchain game starter for Arbitrum Sepolia. The first version generates a two-player Dice Battle game with Solidity contracts, a live wallet-enabled frontend, tests, and deployment instructions.
+ArbiGame Agent is a hackathon MVP that turns a natural-language game idea into a safe, template-based onchain game starter for Arbitrum Sepolia. The first version generates a single-player Dice Battle game with Solidity contracts, a live wallet-enabled frontend, tests, and deployment instructions.
 
 ## Built for Arbitrum Open House London Buildathon
 
@@ -28,7 +28,7 @@ Arbitrum provides Ethereum-compatible infrastructure with lower-cost execution, 
 - Safe Dice Battle Solidity template.
 - Arbitrum Sepolia wallet and network configuration.
 - Generated contract code viewer.
-- Wallet-enabled Dice Battle UI for Join, Roll, and Claim transactions.
+- Wallet-enabled one-player Dice Battle UI for Join, Roll, and Claim transactions.
 - Deployed-contract address support through `NEXT_PUBLIC_DICE_BATTLE_ADDRESS`.
 - Agent pipeline trace that shows prompt parsing, safe-template selection, and Arbitrum file preparation.
 - Hardhat tests for core contract behavior.
@@ -41,9 +41,9 @@ Prompt -> GameSpec -> Smart Contract -> Wallet Game UI -> Arbitrum Sepolia Trans
 
 Example prompts:
 
-- "Create a fantasy dice battle game where two players deposit 0.001 ETH and the winner takes the prize pool."
-- "Create a cyberpunk dice duel on Arbitrum with a neon UI and simple winner-takes-all rule."
-- "Create a two-player dice game for Arbitrum Sepolia with a medieval theme."
+- "Create a fantasy solo dice battle game where one player deposits 0.001 ETH and wins on 4 or higher."
+- "Create a cyberpunk one-player dice challenge on Arbitrum with a neon UI."
+- "Create a solo medieval dice trial for Arbitrum Sepolia."
 
 ## Tech Stack
 
@@ -122,8 +122,8 @@ vercel deploy --prod
 Deployed DiceBattle contract:
 
 ```txt
-Arbitrum Sepolia: 0xFef03A072a68749119a396cF3EB4f26bFeD2CC44
-Explorer: https://sepolia.arbiscan.io/address/0xFef03A072a68749119a396cF3EB4f26bFeD2CC44
+Arbitrum Sepolia: 0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca
+Explorer: https://sepolia.arbiscan.io/address/0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca
 ```
 
 The live game UI expects:
@@ -136,8 +136,8 @@ The live game UI expects:
 When configured, the buttons call the actual contract methods:
 
 - `joinGame()` with the onchain `entryFee`.
-- `rollDice()` after two players have joined.
-- `claimPrize()` when the connected wallet is the winner.
+- `rollDice()` after the solo player has joined.
+- `claimPrize()` when the connected wallet rolled 4 or higher.
 
 ## Security Disclaimer
 

@@ -10,14 +10,14 @@ export const diceBattleAbi = [
   },
   {
     type: "function",
-    name: "player1",
+    name: "WINNING_ROLL",
     stateMutability: "view",
     inputs: [],
-    outputs: [{ name: "", type: "address" }]
+    outputs: [{ name: "", type: "uint8" }]
   },
   {
     type: "function",
-    name: "player2",
+    name: "player",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "address" }]
