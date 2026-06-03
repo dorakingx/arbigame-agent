@@ -1,0 +1,15 @@
+{
+  "name": "arbigame-agent",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "npm --workspace apps/web run dev",
+    "build": "npm --workspace apps/web run build",
+    "test": "npm --workspace contracts run test",
+    "deploy:arbitrum-sepolia": "npm --workspace contracts run deploy:arbitrum-sepolia"
+  }
+}
