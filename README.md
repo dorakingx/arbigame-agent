@@ -119,6 +119,13 @@ vercel deploy --prod
 
 ## Live Demo Notes
 
+Deployed DiceBattle contract:
+
+```txt
+Arbitrum Sepolia: 0xFef03A072a68749119a396cF3EB4f26bFeD2CC44
+Explorer: https://sepolia.arbiscan.io/address/0xFef03A072a68749119a396cF3EB4f26bFeD2CC44
+```
+
 The live game UI expects:
 
 - A browser wallet such as MetaMask.

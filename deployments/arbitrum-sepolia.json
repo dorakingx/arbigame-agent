@@ -1,0 +1,8 @@
+{
+  "chainId": 421614,
+  "chainName": "Arbitrum Sepolia",
+  "contractName": "DiceBattle",
+  "contractAddress": "0xFef03A072a68749119a396cF3EB4f26bFeD2CC44",
+  "entryFeeEth": "0.001",
+  "explorerUrl": "https://sepolia.arbiscan.io/address/0xFef03A072a68749119a396cF3EB4f26bFeD2CC44"
+}
