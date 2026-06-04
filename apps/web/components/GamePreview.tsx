@@ -3,7 +3,14 @@
 import { AlertTriangle, CheckCircle2, Coins, Crown, Dice5, RadioTower, RotateCcw, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatEther, parseEther, zeroAddress } from "viem";
-import { useAccount, useReadContract, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useConnect,
+  useReadContract,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from "wagmi";
 import { arbitrumSepolia } from "@/lib/chains";
 import { diceBattleAbi, diceBattleAddress } from "@/lib/diceBattleContract";
 import type { GameSpec } from "@shared/types/GameSpec";
@@ -22,6 +29,7 @@ const themeStyles = {
 
 export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   const { address, chainId, isConnected } = useAccount();
+  const { connect, connectors, isPending: isConnecting } = useConnect();
   const { switchChain } = useSwitchChain();
   const [lastAction, setLastAction] = useState<string>("Ready. Start a solo round when your wallet is connected.");
 
@@ -91,14 +99,16 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   const isWrongChain = isConnected && chainId !== arbitrumSepolia.id;
   const displayEntryFee = entryFee ? formatEther(entryFee) : spec.entryFeeEth;
   const displayRoundId = roundId ? roundId.toString() : "0";
-  const isBusy = isPending || isConfirming;
+  const isBusy = isPending || isConfirming || isConnecting;
   const canStartRound = !hasPlayer || Boolean(roundSettled && (!hasWinner || prizeClaimed));
   const claimPending = Boolean(hasWinner && !prizeClaimed);
 
   const canSendLiveTx = contractEnabled && isConnected && !isWrongChain && !isBusy;
+  const canUseStartButton = contractEnabled && !isBusy && canStartRound;
   const canJoin = canSendLiveTx && canStartRound;
   const canRoll = canSendLiveTx && isPlayer && !hasRolled && !roundSettled;
   const canClaim = canSendLiveTx && isWinner && !prizeClaimed;
+  const startButtonLabel = !isConnected ? "Connect Wallet" : isWrongChain ? "Switch Network" : "Start Round";
 
   const statusText = useMemo(() => {
     if (!contractEnabled) {
@@ -115,6 +125,10 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
 
     if (isPending) {
       return "Waiting for wallet confirmation...";
+    }
+
+    if (isConnecting) {
+      return "Waiting for wallet connection...";
     }
 
     if (isConfirming) {
@@ -160,6 +174,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     error,
     isConfirmed,
     isConfirming,
+    isConnecting,
     isConnected,
     isPending,
     isWrongChain,
@@ -202,7 +217,13 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     }
 
     if (!isConnected) {
-      setLastAction("Connect a wallet first.");
+      const injectedConnector = connectors[0];
+      if (injectedConnector) {
+        setLastAction("Connect your wallet, then start the round.");
+        connect({ connector: injectedConnector });
+      } else {
+        setLastAction("No browser wallet was found.");
+      }
       return false;
     }
 
@@ -283,7 +304,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
             step="1"
             title="Start"
             body="Deposit the entry fee and begin a solo round."
-            state={canRoll || hasRolled ? "done" : canJoin ? "active" : "locked"}
+            state={canRoll || hasRolled ? "done" : canUseStartButton ? "active" : "locked"}
           />
           <StepCard
             step="2"
@@ -318,9 +339,9 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
             className="rounded bg-electric px-4 py-3 text-sm font-bold text-ink transition hover:bg-white disabled:cursor-not-allowed disabled:bg-white/15 disabled:text-white/35"
             type="button"
             onClick={joinGame}
-            disabled={!canJoin}
+            disabled={!canUseStartButton}
           >
-            {canStartRound ? "Start Round" : "Round Active"}
+            {canStartRound ? startButtonLabel : "Round Active"}
           </button>
           <button
             className="rounded border border-white/14 bg-white/[0.07] px-4 py-3 text-sm font-bold text-white transition hover:border-electric disabled:cursor-not-allowed disabled:text-white/35"
