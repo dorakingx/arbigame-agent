@@ -2,9 +2,12 @@
   "chainId": 421614,
   "chainName": "Arbitrum Sepolia",
   "contractName": "DiceBattle",
-  "contractAddress": "0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca",
+  "contractAddress": "0x8239C55b166831464Cc9AFd50b85e4a55B50e5aF",
   "entryFeeEth": "0.001",
   "gameMode": "single-player",
   "winRule": "Roll 4 or higher",
-  "explorerUrl": "https://sepolia.arbiscan.io/address/0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca"
+  "supportsReplayableRounds": true,
+  "verifiedPlaytestContract": "0x832Da4c265c2CF1C8625D21F40F4a55E0Fc7F294",
+  "verifiedPlaytestResult": "Joined round 1, rolled 6, claimed prize successfully",
+  "explorerUrl": "https://sepolia.arbiscan.io/address/0x8239C55b166831464Cc9AFd50b85e4a55B50e5aF"
 }

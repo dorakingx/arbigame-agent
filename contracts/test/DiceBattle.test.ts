@@ -13,13 +13,14 @@ describe("DiceBattle", function () {
     return { diceBattle, player, outsider };
   }
 
-  it("player can join with correct entry fee", async function () {
+  it("player can join a solo round with correct entry fee", async function () {
     const { diceBattle, player } = await deployDiceBattle();
 
     await expect(diceBattle.connect(player).joinGame({ value: entryFee }))
       .to.emit(diceBattle, "PlayerJoined")
-      .withArgs(player.address);
+      .withArgs(1, player.address);
 
+    expect(await diceBattle.roundId()).to.equal(1);
     expect(await diceBattle.player()).to.equal(player.address);
   });
 
@@ -32,7 +33,7 @@ describe("DiceBattle", function () {
     );
   });
 
-  it("second player cannot join an active solo game", async function () {
+  it("second player cannot join while a solo round is active", async function () {
     const { diceBattle, player, outsider } = await deployDiceBattle();
     await diceBattle.connect(player).joinGame({ value: entryFee });
 
@@ -43,7 +44,8 @@ describe("DiceBattle", function () {
   });
 
   it("non-player cannot roll", async function () {
-    const { diceBattle, outsider } = await deployDiceBattle();
+    const { diceBattle, player, outsider } = await deployDiceBattle();
+    await diceBattle.connect(player).joinGame({ value: entryFee });
 
     await expect(diceBattle.connect(outsider).rollDice()).to.be.revertedWithCustomError(diceBattle, "NotPlayer");
   });
@@ -54,7 +56,7 @@ describe("DiceBattle", function () {
     await expect(diceBattle.connect(player).rollDice()).to.be.revertedWithCustomError(diceBattle, "NotPlayer");
   });
 
-  it("player cannot roll twice", async function () {
+  it("player cannot roll twice in the same round", async function () {
     const { diceBattle, player } = await deployDiceBattle();
     await diceBattle.connect(player).joinGame({ value: entryFee });
     await diceBattle.connect(player).rollDice();
@@ -62,7 +64,7 @@ describe("DiceBattle", function () {
     await expect(diceBattle.connect(player).rollDice()).to.be.revertedWithCustomError(diceBattle, "AlreadyRolled");
   });
 
-  it("winner is decided after the solo player rolls", async function () {
+  it("round is settled after the solo player rolls", async function () {
     const { diceBattle, player } = await deployDiceBattle();
     await diceBattle.connect(player).joinGame({ value: entryFee });
 
@@ -71,6 +73,7 @@ describe("DiceBattle", function () {
     const roll = await diceBattle.rolls(player.address);
     const winner = await diceBattle.winner();
 
+    expect(await diceBattle.roundSettled()).to.equal(true);
     expect(roll).to.be.greaterThanOrEqual(1);
     expect(roll).to.be.lessThanOrEqual(6);
 
@@ -100,6 +103,18 @@ describe("DiceBattle", function () {
       );
     } else {
       await expect(diceBattle.connect(outsider).claimPrize()).to.be.revertedWithCustomError(diceBattle, "LosingRoll");
+    }
+  });
+
+  it("a losing round lets the next solo round start", async function () {
+    const { diceBattle, player, outsider } = await deployDiceBattle();
+    await diceBattle.connect(player).joinGame({ value: entryFee });
+    await diceBattle.connect(player).rollDice();
+
+    if ((await diceBattle.winner()) === ethers.ZeroAddress) {
+      await diceBattle.connect(outsider).joinGame({ value: entryFee });
+      expect(await diceBattle.roundId()).to.equal(2);
+      expect(await diceBattle.player()).to.equal(outsider.address);
     }
   });
 

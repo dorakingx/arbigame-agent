@@ -8,21 +8,24 @@ contract DiceBattle {
     uint8 public constant WINNING_ROLL = 4;
 
     uint256 public immutable entryFee;
+    uint256 public roundId;
     address public player;
     address public winner;
     bool public prizeClaimed;
+    bool public roundSettled;
+
+    uint8 private playerRoll;
+    bool private playerHasRolled;
     uint256 private rollNonce;
 
-    mapping(address => uint8) public rolls;
-    mapping(address => bool) public hasRolled;
-
-    event PlayerJoined(address indexed player);
-    event DiceRolled(address indexed player, uint8 roll);
-    event WinnerDecided(address indexed winner);
-    event PrizeClaimed(address indexed winner, uint256 amount);
+    event PlayerJoined(uint256 indexed roundId, address indexed player);
+    event DiceRolled(uint256 indexed roundId, address indexed player, uint8 roll);
+    event WinnerDecided(uint256 indexed roundId, address indexed winner);
+    event PrizeClaimed(uint256 indexed roundId, address indexed winner, uint256 amount);
 
     error IncorrectEntryFee();
     error GameAlreadyStarted();
+    error PrizePending();
     error NotPlayer();
     error AlreadyRolled();
     error RollRequired();
@@ -37,15 +40,23 @@ contract DiceBattle {
 
     function joinGame() external payable {
         if (msg.value != entryFee) revert IncorrectEntryFee();
-        if (player != address(0)) revert GameAlreadyStarted();
+        if (player != address(0) && !roundSettled) revert GameAlreadyStarted();
+        if (winner != address(0) && !prizeClaimed) revert PrizePending();
 
+        roundId++;
         player = msg.sender;
-        emit PlayerJoined(msg.sender);
+        winner = address(0);
+        prizeClaimed = false;
+        roundSettled = false;
+        playerRoll = 0;
+        playerHasRolled = false;
+
+        emit PlayerJoined(roundId, msg.sender);
     }
 
     function rollDice() external {
         if (msg.sender != player) revert NotPlayer();
-        if (hasRolled[msg.sender]) revert AlreadyRolled();
+        if (playerHasRolled) revert AlreadyRolled();
 
         // Insecure pseudo-randomness for testnet/demo only.
         // Replace with a production-grade randomness source before using real funds.
@@ -53,24 +64,25 @@ contract DiceBattle {
         uint8 roll = uint8(
             (uint256(
                 keccak256(
-                    abi.encodePacked(block.timestamp, block.prevrandao, msg.sender, address(this), rollNonce)
+                    abi.encodePacked(block.timestamp, block.prevrandao, msg.sender, address(this), roundId, rollNonce)
                 )
             ) % 6) + 1
         );
 
-        rolls[msg.sender] = roll;
-        hasRolled[msg.sender] = true;
-        emit DiceRolled(msg.sender, roll);
+        playerRoll = roll;
+        playerHasRolled = true;
+        roundSettled = true;
+        emit DiceRolled(roundId, msg.sender, roll);
 
         if (roll >= WINNING_ROLL) {
             winner = msg.sender;
         }
 
-        emit WinnerDecided(winner);
+        emit WinnerDecided(roundId, winner);
     }
 
     function claimPrize() external {
-        if (!hasRolled[player]) revert RollRequired();
+        if (!playerHasRolled) revert RollRequired();
         if (winner == address(0)) revert LosingRoll();
         if (msg.sender != winner) revert OnlyWinnerCanClaim();
         if (prizeClaimed) revert PrizeAlreadyClaimed();
@@ -80,6 +92,14 @@ contract DiceBattle {
         (bool success, ) = winner.call{value: amount}("");
         if (!success) revert TransferFailed();
 
-        emit PrizeClaimed(winner, amount);
+        emit PrizeClaimed(roundId, winner, amount);
+    }
+
+    function rolls(address account) external view returns (uint8) {
+        return account == player ? playerRoll : 0;
+    }
+
+    function hasRolled(address account) external view returns (bool) {
+        return account == player && playerHasRolled;
     }
 }

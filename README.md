@@ -33,6 +33,8 @@ Arbitrum provides Ethereum-compatible infrastructure with lower-cost execution, 
 - Agent pipeline trace that shows prompt parsing, safe-template selection, and Arbitrum file preparation.
 - Hardhat tests for core contract behavior.
 - Deployment script for Arbitrum Sepolia.
+- Replayable solo rounds so hackathon judges can start a fresh round without redeploying.
+- Step-by-step game panel that shows Start, Roll, Finish, current roll, and next action.
 - Demo-only and unaudited warnings throughout the app.
 
 ## Buildathon Demo Flow
@@ -122,8 +124,8 @@ vercel deploy --prod
 Deployed DiceBattle contract:
 
 ```txt
-Arbitrum Sepolia: 0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca
-Explorer: https://sepolia.arbiscan.io/address/0xdb7fB1Db699536bD84598cCA6Fc84A45e8cAb2ca
+Arbitrum Sepolia: 0x8239C55b166831464Cc9AFd50b85e4a55B50e5aF
+Explorer: https://sepolia.arbiscan.io/address/0x8239C55b166831464Cc9AFd50b85e4a55B50e5aF
 ```
 
 The live game UI expects:
@@ -138,6 +140,19 @@ When configured, the buttons call the actual contract methods:
 - `joinGame()` with the onchain `entryFee`.
 - `rollDice()` after the solo player has joined.
 - `claimPrize()` when the connected wallet rolled 4 or higher.
+
+You can also run an end-to-end playtest from the terminal:
+
+```bash
+DICE_BATTLE_ADDRESS=0xYourDeployedDiceBattle npm run play:arbitrum-sepolia
+```
+
+End-to-end Sepolia playtest:
+
+```txt
+Playtest contract: 0x832Da4c265c2CF1C8625D21F40F4a55E0Fc7F294
+Result: joined round 1, rolled 6, claimed prize successfully.
+```
 
 ## Security Disclaimer
 

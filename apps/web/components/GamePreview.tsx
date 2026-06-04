@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Coins, Crown, Dice5, RadioTower } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Coins, Crown, Dice5, RadioTower, RotateCcw, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatEther, parseEther, zeroAddress } from "viem";
 import { useAccount, useReadContract, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
@@ -23,13 +23,19 @@ const themeStyles = {
 export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   const { address, chainId, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
-  const [lastAction, setLastAction] = useState<string>("Ready for live Arbitrum Sepolia demo.");
+  const [lastAction, setLastAction] = useState<string>("Ready. Start a solo round when your wallet is connected.");
 
   const contractEnabled = Boolean(diceBattleAddress);
   const { data: entryFee, refetch: refetchEntryFee } = useReadContract({
     address: diceBattleAddress,
     abi: diceBattleAbi,
     functionName: "entryFee",
+    query: { enabled: contractEnabled }
+  });
+  const { data: roundId, refetch: refetchRoundId } = useReadContract({
+    address: diceBattleAddress,
+    abi: diceBattleAbi,
+    functionName: "roundId",
     query: { enabled: contractEnabled }
   });
   const { data: player, refetch: refetchPlayer } = useReadContract({
@@ -48,6 +54,12 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     address: diceBattleAddress,
     abi: diceBattleAbi,
     functionName: "prizeClaimed",
+    query: { enabled: contractEnabled }
+  });
+  const { data: roundSettled, refetch: refetchRoundSettled } = useReadContract({
+    address: diceBattleAddress,
+    abi: diceBattleAbi,
+    functionName: "roundSettled",
     query: { enabled: contractEnabled }
   });
   const { data: hasRolled, refetch: refetchHasRolled } = useReadContract({
@@ -72,20 +84,29 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
   const normalizedPlayer = player?.toLowerCase();
   const normalizedWinner = winner?.toLowerCase();
   const hasPlayer = Boolean(player && player !== zeroAddress);
+  const hasWinner = Boolean(winner && winner !== zeroAddress);
   const isPlayer = Boolean(normalizedAddress && normalizedAddress === normalizedPlayer);
   const isWinner = Boolean(normalizedAddress && normalizedWinner && normalizedWinner !== zeroAddress && normalizedAddress === normalizedWinner);
-  const didLose = Boolean(isPlayer && hasRolled && (!winner || winner === zeroAddress));
+  const didLose = Boolean(isPlayer && roundSettled && hasRolled && !hasWinner);
   const isWrongChain = isConnected && chainId !== arbitrumSepolia.id;
   const displayEntryFee = entryFee ? formatEther(entryFee) : spec.entryFeeEth;
+  const displayRoundId = roundId ? roundId.toString() : "0";
   const isBusy = isPending || isConfirming;
+  const canStartRound = !hasPlayer || Boolean(roundSettled && (!hasWinner || prizeClaimed));
+  const claimPending = Boolean(hasWinner && !prizeClaimed);
+
+  const canSendLiveTx = contractEnabled && isConnected && !isWrongChain && !isBusy;
+  const canJoin = canSendLiveTx && canStartRound;
+  const canRoll = canSendLiveTx && isPlayer && !hasRolled && !roundSettled;
+  const canClaim = canSendLiveTx && isWinner && !prizeClaimed;
 
   const statusText = useMemo(() => {
     if (!contractEnabled) {
-      return "Deploy DiceBattle and set NEXT_PUBLIC_DICE_BATTLE_ADDRESS to enable live transactions.";
+      return "Live contract address is not configured yet.";
     }
 
     if (!isConnected) {
-      return "Connect a wallet to play against the deployed Arbitrum Sepolia contract.";
+      return "Connect your wallet to start a solo round.";
     }
 
     if (isWrongChain) {
@@ -101,19 +122,51 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     }
 
     if (isConfirmed) {
-      return `${lastAction} confirmed on Arbitrum Sepolia.`;
+      return `${lastAction} confirmed.`;
     }
 
     if (error) {
       return error.message.split("\n")[0];
     }
 
+    if (canRoll) {
+      return `Round ${displayRoundId}: you joined. Roll the dice to finish the round.`;
+    }
+
+    if (canClaim) {
+      return `You rolled ${myRoll ?? "-"} and won. Claim the prize to finish.`;
+    }
+
     if (didLose) {
-      return "Roll settled. You needed 4 or higher, so there is no claimable prize this round.";
+      return `You rolled ${myRoll ?? "-"}. Round complete: no claim this time. Start another round.`;
+    }
+
+    if (claimPending) {
+      return "A winning round is waiting for the winner to claim before a new round can start.";
+    }
+
+    if (canJoin) {
+      return "Ready. Start a solo round with one wallet transaction.";
     }
 
     return lastAction;
-  }, [contractEnabled, didLose, error, isConfirmed, isConfirming, isConnected, isPending, isWrongChain, lastAction]);
+  }, [
+    canClaim,
+    canJoin,
+    canRoll,
+    claimPending,
+    contractEnabled,
+    didLose,
+    error,
+    isConfirmed,
+    isConfirming,
+    isConnected,
+    isPending,
+    isWrongChain,
+    lastAction,
+    displayRoundId,
+    myRoll,
+  ]);
 
   useEffect(() => {
     if (!isConfirmed) {
@@ -122,9 +175,11 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
 
     void Promise.all([
       refetchEntryFee(),
+      refetchRoundId(),
       refetchPlayer(),
       refetchWinner(),
       refetchPrizeClaimed(),
+      refetchRoundSettled(),
       refetchHasRolled(),
       refetchMyRoll()
     ]);
@@ -135,6 +190,8 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     refetchMyRoll,
     refetchPlayer,
     refetchPrizeClaimed,
+    refetchRoundId,
+    refetchRoundSettled,
     refetchWinner
   ]);
 
@@ -162,7 +219,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
       return;
     }
 
-    setLastAction("Join Game");
+    setLastAction("Start Round");
     writeContract({
       address: diceBattleAddress,
       abi: diceBattleAbi,
@@ -197,11 +254,6 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     });
   }
 
-  const canSendLiveTx = contractEnabled && isConnected && !isWrongChain && !isBusy;
-  const canJoin = canSendLiveTx && !hasPlayer;
-  const canRoll = canSendLiveTx && isPlayer && !hasRolled;
-  const canClaim = canSendLiveTx && isWinner && !prizeClaimed;
-
   return (
     <section className={`rounded border border-white/12 bg-gradient-to-br ${themeStyles[spec.theme]} p-[1px] shadow-2xl`}>
       <div className="rounded bg-ink/90 p-5 backdrop-blur">
@@ -219,14 +271,41 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <Stat icon={<Coins size={16} />} label="Entry" value={`${displayEntryFee} ETH`} />
-          <Stat icon={<Crown size={16} />} label="Win Rule" value="Roll 4+" />
+          <Stat icon={<Trophy size={16} />} label="Win Rule" value="Roll 4+" />
           <Stat icon={<Dice5 size={16} />} label="Players" value="1 only" />
+          <Stat icon={<RotateCcw size={16} />} label="Round" value={`#${displayRoundId}`} />
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <StepCard
+            step="1"
+            title="Start"
+            body="Deposit the entry fee and begin a solo round."
+            state={canRoll || hasRolled ? "done" : canJoin ? "active" : "locked"}
+          />
+          <StepCard
+            step="2"
+            title="Roll"
+            body="Roll once. 4, 5, or 6 wins."
+            state={hasRolled ? "done" : canRoll ? "active" : "locked"}
+          />
+          <StepCard
+            step="3"
+            title="Finish"
+            body={canClaim ? "Claim your prize." : didLose ? "Round complete. Try again." : "Win to unlock claim."}
+            state={prizeClaimed || didLose ? "done" : canClaim ? "active" : "locked"}
+          />
         </div>
 
         <div className="mt-5 rounded border border-white/10 bg-white/[0.04] p-4">
-          <h3 className="mb-3 text-sm font-semibold text-white/82">Rules</h3>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-white/82">Current result</h3>
+            <span className="rounded border border-white/10 bg-[#0c101b] px-2 py-1 text-xs font-semibold text-white/58">
+              {hasRolled ? `Roll: ${myRoll ?? "-"}` : "No roll yet"}
+            </span>
+          </div>
           <ul className="space-y-2 text-sm text-white/68">
             {spec.rules.slice(0, compact ? 3 : spec.rules.length).map((rule) => (
               <li key={rule}>{rule}</li>
@@ -241,7 +320,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
             onClick={joinGame}
             disabled={!canJoin}
           >
-            {hasPlayer ? "Game Started" : "Join Game"}
+            {canStartRound ? "Start Round" : "Round Active"}
           </button>
           <button
             className="rounded border border-white/14 bg-white/[0.07] px-4 py-3 text-sm font-bold text-white transition hover:border-electric disabled:cursor-not-allowed disabled:text-white/35"
@@ -263,14 +342,14 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
 
         <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
           <div className="rounded border border-white/10 bg-[#0c101b] p-3">
-            <p className="text-white/42">Transaction status</p>
+            <p className="text-white/42">Next action</p>
             <p className="mt-1 font-semibold text-electric">{statusText}</p>
             {hash ? <p className="mt-2 truncate font-mono text-xs text-white/45">{hash}</p> : null}
           </div>
           <div className="rounded border border-white/10 bg-[#0c101b] p-3">
             <p className="text-white/42">Contract address</p>
             <p className="mt-1 truncate font-mono text-white/72">{diceBattleAddress ?? "Deploy pending"}</p>
-            {winner && winner !== zeroAddress ? (
+            {hasWinner ? (
               <p className="mt-2 truncate text-xs text-white/45">Winner: {winner}</p>
             ) : hasRolled ? (
               <p className="mt-2 text-xs text-white/45">No winner. Roll was below 4.</p>
@@ -284,6 +363,35 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
         </div>
       </div>
     </section>
+  );
+}
+
+function StepCard({
+  body,
+  state,
+  step,
+  title
+}: {
+  body: string;
+  state: "active" | "done" | "locked";
+  step: string;
+  title: string;
+}) {
+  const stateClasses = {
+    active: "border-electric/60 bg-electric/10 text-electric",
+    done: "border-emerald-400/45 bg-emerald-400/10 text-emerald-300",
+    locked: "border-white/10 bg-white/[0.04] text-white/42"
+  };
+
+  return (
+    <div className={`rounded border p-3 ${stateClasses[state]}`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="grid h-7 w-7 place-items-center rounded bg-white/10 text-xs font-black">{step}</span>
+        {state === "done" ? <CheckCircle2 size={16} aria-hidden="true" /> : null}
+      </div>
+      <h3 className="text-sm font-bold text-white">{title}</h3>
+      <p className="mt-1 text-xs leading-5 text-white/58">{body}</p>
+    </div>
   );
 }
 

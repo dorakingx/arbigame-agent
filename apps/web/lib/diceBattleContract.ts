@@ -10,6 +10,13 @@ export const diceBattleAbi = [
   },
   {
     type: "function",
+    name: "roundId",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
     name: "WINNING_ROLL",
     stateMutability: "view",
     inputs: [],
@@ -32,6 +39,13 @@ export const diceBattleAbi = [
   {
     type: "function",
     name: "prizeClaimed",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
+    type: "function",
+    name: "roundSettled",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "bool" }]
@@ -74,13 +88,17 @@ export const diceBattleAbi = [
   {
     type: "event",
     name: "PlayerJoined",
-    inputs: [{ name: "player", type: "address", indexed: true }],
+    inputs: [
+      { name: "roundId", type: "uint256", indexed: true },
+      { name: "player", type: "address", indexed: true }
+    ],
     anonymous: false
   },
   {
     type: "event",
     name: "DiceRolled",
     inputs: [
+      { name: "roundId", type: "uint256", indexed: true },
       { name: "player", type: "address", indexed: true },
       { name: "roll", type: "uint8", indexed: false }
     ],
@@ -89,13 +107,17 @@ export const diceBattleAbi = [
   {
     type: "event",
     name: "WinnerDecided",
-    inputs: [{ name: "winner", type: "address", indexed: true }],
+    inputs: [
+      { name: "roundId", type: "uint256", indexed: true },
+      { name: "winner", type: "address", indexed: true }
+    ],
     anonymous: false
   },
   {
     type: "event",
     name: "PrizeClaimed",
     inputs: [
+      { name: "roundId", type: "uint256", indexed: true },
       { name: "winner", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false }
     ],

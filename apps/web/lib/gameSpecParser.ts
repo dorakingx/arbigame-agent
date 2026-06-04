@@ -24,7 +24,7 @@ export function parsePromptToGameSpec(prompt: string): GameSpec {
       "The player rolls one six-sided dice once.",
       "A roll of 4, 5, or 6 wins the solo challenge.",
       "A winning player can claim the contract prize pool.",
-      "A roll of 1, 2, or 3 ends the demo round without a claimable prize."
+      "A roll of 1, 2, or 3 settles the round as a loss, then a new solo round can begin."
     ],
     targetChain: "Arbitrum Sepolia",
     chainId: 421614,

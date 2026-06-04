@@ -10,6 +10,7 @@
     "dev": "npm --workspace apps/web run dev",
     "build": "npm --workspace apps/web run build",
     "test": "npm --workspace contracts run test",
-    "deploy:arbitrum-sepolia": "npm --workspace contracts run deploy:arbitrum-sepolia"
+    "deploy:arbitrum-sepolia": "npm --workspace contracts run deploy:arbitrum-sepolia",
+    "play:arbitrum-sepolia": "npm --workspace contracts run play:arbitrum-sepolia"
   }
 }

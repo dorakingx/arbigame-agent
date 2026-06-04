@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:arbitrum-sepolia": "hardhat run scripts/deployDiceBattle.ts --network arbitrumSepolia"
+    "deploy:arbitrum-sepolia": "hardhat run scripts/deployDiceBattle.ts --network arbitrumSepolia",
+    "play:arbitrum-sepolia": "hardhat run scripts/playSoloRound.ts --network arbitrumSepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
