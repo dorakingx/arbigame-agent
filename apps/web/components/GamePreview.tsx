@@ -140,7 +140,7 @@ export function GamePreview({ spec, compact = false }: GamePreviewProps) {
     }
 
     if (error) {
-      return error.message.split("\n")[0];
+      return formatTransactionError(error);
     }
 
     if (canRoll) {
@@ -424,4 +424,18 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <p className="mt-1 text-sm font-bold text-white">{value}</p>
     </div>
   );
+}
+
+function formatTransactionError(error: Error) {
+  const message = error.message;
+
+  if (message.includes("Demo-only / unaudited")) {
+    return "Wallet simulation used an old cached demo call. Hard refresh, confirm Arbitrum Sepolia, then try Start Round again.";
+  }
+
+  if (message.includes("User rejected") || message.includes("rejected the request")) {
+    return "Wallet request was rejected.";
+  }
+
+  return message.split("\n").find(Boolean) ?? "Transaction failed. Check the wallet popup for details.";
 }
