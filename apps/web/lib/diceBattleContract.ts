@@ -125,9 +125,10 @@ export const diceBattleAbi = [
   }
 ] as const;
 
+const fallbackArbitrumSepoliaAddress = "0x8239C55b166831464Cc9AFd50b85e4a55B50e5aF";
 const configuredAddress = process.env.NEXT_PUBLIC_DICE_BATTLE_ADDRESS;
+const liveAddress = configuredAddress && isAddress(configuredAddress) ? configuredAddress : fallbackArbitrumSepoliaAddress;
 
-export const diceBattleAddress =
-  configuredAddress && isAddress(configuredAddress) ? configuredAddress : undefined;
+export const diceBattleAddress = isAddress(liveAddress) ? liveAddress : undefined;
 
 export const hasLiveDiceBattle = Boolean(diceBattleAddress && diceBattleAddress !== zeroAddress);
