@@ -19,7 +19,7 @@ type GeminiGenerateContentResponse = {
 type GeminiGameSpec = Partial<Pick<GameSpec, "title" | "theme" | "entryFeeEth" | "prizeRule" | "rules">>;
 
 const themes = new Set<GameTheme>(["fantasy", "cyberpunk", "medieval", "default"]);
-const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as GenerateGameRequest;
