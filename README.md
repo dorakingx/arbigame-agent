@@ -77,7 +77,11 @@ For live contract interactions, create `apps/web/.env.local`:
 ```bash
 NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 NEXT_PUBLIC_DICE_BATTLE_ADDRESS=0xYourDeployedDiceBattle
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
 ```
+
+`GEMINI_API_KEY` is only read by the Next.js API route and is never exposed to the browser. If it is not set, the app falls back to the local safe GameSpec generator.
 
 ## Run Contract Tests
 
@@ -111,6 +115,8 @@ After deploying the contract, set this environment variable in Vercel:
 
 ```bash
 NEXT_PUBLIC_DICE_BATTLE_ADDRESS=0xYourDeployedDiceBattle
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 Then redeploy:

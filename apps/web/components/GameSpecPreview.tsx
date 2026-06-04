@@ -14,7 +14,7 @@ export function GameSpecPreview({ spec }: GameSpecPreviewProps) {
         </div>
         <div>
           <h2 className="text-xl font-bold">GameSpec</h2>
-          <p className="text-sm text-white/55">Structured output from the mock agent</p>
+          <p className="text-sm text-white/55">Structured output from the AI game agent</p>
         </div>
       </div>
 

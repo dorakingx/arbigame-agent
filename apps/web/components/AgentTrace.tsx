@@ -1,15 +1,17 @@
 import { Bot, CheckCircle2, FileCode2, ShieldCheck } from "lucide-react";
 
 interface AgentTraceProps {
+  agentMessage: string;
+  agentSource: "gemini" | "local-fallback";
   isGenerating: boolean;
 }
 
-export function AgentTrace({ isGenerating }: AgentTraceProps) {
+export function AgentTrace({ agentMessage, agentSource, isGenerating }: AgentTraceProps) {
   const steps = [
     {
       icon: <Bot size={16} aria-hidden="true" />,
-      title: "Parsing prompt",
-      body: "Extract theme, player count, entry fee, and target chain."
+      title: "AI game design",
+      body: "Use Gemini to turn the prompt into a structured solo Dice Battle spec."
     },
     {
       icon: <ShieldCheck size={16} aria-hidden="true" />,
@@ -29,9 +31,10 @@ export function AgentTrace({ isGenerating }: AgentTraceProps) {
         <p className="text-sm font-semibold text-white/82">Agent pipeline</p>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-electric">
           <CheckCircle2 size={14} aria-hidden="true" />
-          {isGenerating ? "Running" : "Ready"}
+          {isGenerating ? "Running" : agentSource === "gemini" ? "Gemini" : "Fallback"}
         </span>
       </div>
+      <p className="mb-3 rounded border border-white/10 bg-ink/60 px-3 py-2 text-xs leading-5 text-white/62">{agentMessage}</p>
       <div className="grid gap-2 sm:grid-cols-3">
         {steps.map((step) => (
           <div key={step.title} className="rounded border border-white/10 bg-ink/60 p-3">

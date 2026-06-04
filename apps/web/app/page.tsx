@@ -11,6 +11,7 @@ import { PromptForm } from "@/components/PromptForm";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { generateDiceBattleContract } from "@/lib/diceBattleTemplate";
 import { generateGame } from "@/lib/mockAgent";
+import type { GameSpec } from "@shared/types/GameSpec";
 
 const defaultPrompt =
   "Create a fantasy solo dice battle game on Arbitrum. One player deposits 0.001 ETH and wins by rolling 4 or higher.";
@@ -23,17 +24,47 @@ const examples = [
 
 export default function Home() {
   const [prompt, setPrompt] = useState(defaultPrompt);
-  const [generatedPrompt, setGeneratedPrompt] = useState(defaultPrompt);
+  const [spec, setSpec] = useState<GameSpec>(() => generateGame(defaultPrompt));
   const [isGenerating, setIsGenerating] = useState(false);
+  const [agentSource, setAgentSource] = useState<"gemini" | "local-fallback">("local-fallback");
+  const [agentMessage, setAgentMessage] = useState("Local safe generator is ready until GEMINI_API_KEY is configured.");
 
-  const spec = useMemo(() => generateGame(generatedPrompt), [generatedPrompt]);
   const contractCode = useMemo(() => generateDiceBattleContract(spec), [spec]);
 
   async function handleGenerate() {
     setIsGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 650));
-    setGeneratedPrompt(prompt);
-    setIsGenerating(false);
+    setAgentMessage("Asking AI game designer for a safe Dice Battle spec...");
+
+    try {
+      const response = await fetch("/api/generate-game", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        source?: "gemini" | "local-fallback";
+        spec?: GameSpec;
+      };
+
+      if (!response.ok || !data.spec) {
+        throw new Error(data.error ?? "AI generation failed.");
+      }
+
+      setSpec(data.spec);
+      setAgentSource(data.source ?? "gemini");
+      setAgentMessage(data.message ?? (data.source === "local-fallback" ? "Local fallback generated this spec." : "Gemini generated this GameSpec."));
+    } catch (error) {
+      setSpec(generateGame(prompt));
+      setAgentSource("local-fallback");
+      setAgentMessage(error instanceof Error ? error.message : "Local fallback generated this spec.");
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   return (
@@ -68,13 +99,14 @@ export default function Home() {
             </div>
 
             <PromptForm
+              agentSource={agentSource}
               examples={examples}
               isGenerating={isGenerating}
               prompt={prompt}
               onPromptChange={setPrompt}
               onGenerate={handleGenerate}
             />
-            <AgentTrace isGenerating={isGenerating} />
+            <AgentTrace agentMessage={agentMessage} agentSource={agentSource} isGenerating={isGenerating} />
           </div>
 
           <GamePreview spec={spec} compact />
